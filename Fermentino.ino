@@ -3,23 +3,32 @@
 #include <SoftwareSerial.h>
 #include <serLCD.h>
 
-#define TEMPERATURE_PIN 10
-#define REMOTE_SWITCH_PIN 9
-#define LCD_PIN 2
+#define TEMPERATURE_MIN 15.0
+#define TEMPERATURE_MAX 90.0
 
 // See this link on how to set the following constants
 // https://github.com/sui77/rc-switch/wiki/HowTo_OperateLowCostOutlets
-#define REMOTE_SWITCH_GROUP "00001"
-#define REMOTE_SWITCH_OUTLET "01000"
+#define REMOTE_SWITCH_GROUP "10000"
+#define REMOTE_SWITCH_OUTLET "10000"
+
+#define TEMPERATURE_PIN 10
+#define REMOTE_SWITCH_PIN 9
+#define LCD_PIN 2
+#define POTENTIOMETER_PIN 0
 
 OneWire ds(TEMPERATURE_PIN);
 RCSwitch rc = RCSwitch();
 serLCD lcd(LCD_PIN);
 
 float getTemperature(void);
+float getSetpoint(void);
 void startHeater(void);
 void stopHeater(void);
 void printTemperature(void);
+void printStatus(float temperature, float setpoint, char isHeating);
+void printStatusLCD(float temperature, float setpoint, char isHeating);
+void printStatusSerial(float temperature, float setpoint, char isHeating);
+float mapFloat(float input, float input_start, float input_end, float output_start, float output_end);
 
 void setup(void) {
   pinMode(LED_BUILTIN, OUTPUT);
@@ -27,45 +36,85 @@ void setup(void) {
   rc.enableTransmit(REMOTE_SWITCH_PIN);
 }
 
-
-int flip = 1;
-
 void loop(void) {
   while (true) {
     float temperature = getTemperature();
-    Serial.println(temperature, 2);
+    float setpoint = getSetpoint();
+    char isHeating;
 
-    printTemperature(temperature);
-
-    flip = 1 - flip;
-    if (flip) {
+    if (temperature < setpoint) {
       startHeater();
+      isHeating = 1;
     } else {
       stopHeater();
+      isHeating = 0;
     }
+
+    printStatus(temperature, setpoint, isHeating);
   }
 }
 
+void printStatus(float temperature, float setpoint, char isHeating) {
+  printStatusLCD(temperature, setpoint, isHeating);
+  printStatusSerial(temperature, setpoint, isHeating);
+}
+
+void printStatusSerial(float temperature, float setpoint, char isHeating) {
+  if (isHeating) {
+    Serial.print("HEATING");
+  } else {
+    Serial.print("IDLE");
+  }
+
+  Serial.print(" - ");
+
+  Serial.print("Current: ");
+  Serial.print(temperature, 2);
+
+  Serial.print(" - ");
+
+  Serial.print("Setpoint: ");
+  Serial.println(setpoint, 1);
+}
+
+void printStatusLCD(float temperature, float setpoint, char isHeating) {
+  lcd.clear();
+
+  //        [                ]
+  lcd.print("ist         soll");
+  lcd.print(temperature, 2);
+  lcd.print("  ");
+
+  if (isHeating) {
+    lcd.print("->");
+  } else {
+    lcd.print("  ");
+  }
+
+  lcd.print("  ");
+  lcd.print(setpoint, 2);
+}
+
 void startHeater(void) {
-  Serial.println("STARTING HEATER");
   digitalWrite(LED_BUILTIN, HIGH);
 
   rc.switchOn(REMOTE_SWITCH_GROUP, REMOTE_SWITCH_OUTLET);
 }
 
 void stopHeater(void) {
-  Serial.println("STOPPING HEATER");
   digitalWrite(LED_BUILTIN, LOW);
 
   rc.switchOff(REMOTE_SWITCH_GROUP, REMOTE_SWITCH_OUTLET);
 }
 
-void printTemperature(float temperature) {
-  lcd.clear();
-  lcd.print(temperature, 2);
+float getSetpoint(void) {
+  int reading = analogRead(POTENTIOMETER_PIN);
+  return mapFloat(reading, 0, 1023, TEMPERATURE_MIN, TEMPERATURE_MAX);
+}
 
-  // Degree symbol
-  lcd.print((char) 223);
+float mapFloat(float input, float input_start, float input_end, float output_start, float output_end) {
+  float slope = 1.0 * (output_end - output_start) / (input_end - input_start);
+  return output_start + slope * (input - input_start);
 }
 
 // Returns the temperature from one DS18S20 in Degrees Celsius
