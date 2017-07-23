@@ -1,20 +1,50 @@
 #include <OneWire.h>
+#include <RCSwitch.h>
 
 #define TEMPERATURE_PIN 10
+#define REMOTE_SWITCH_PIN 9
+
+# See https://github.com/sui77/rc-switch/wiki/HowTo_OperateLowCostOutlets
+#define REMOTE_SWITCH_GROUP "00001"
+#define REMOTE_SWITCH_OUTLET "01000"
 
 OneWire ds(TEMPERATURE_PIN);
+RCSwitch rc = RCSwitch();
 
 float getTemperature(void);
+void startHeater(void);
+void stopHeater(void);
 
 void setup(void) {
   Serial.begin(9600);
+  rc.enableTransmit(REMOTE_SWITCH_PIN);
 }
+
+
+int flip = 1;
 
 void loop(void) {
   while (true) {
     float temperature = getTemperature();
     Serial.println(temperature, 2);
+
+    flip = 1 - flip;
+    if (flip) {
+      startHeater();
+    } else {
+      stopHeater();
+    }
   }
+}
+
+void startHeater(void) {
+  Serial.println("STARTING HEATER");
+  rc.switchOn(REMOTE_SWITCH_GROUP, REMOTE_SWITCH_OUTLET);
+}
+
+void stopHeater(void) {
+  Serial.println("STOPPING HEATER");
+  rc.switchOff(REMOTE_SWITCH_GROUP, REMOTE_SWITCH_OUTLET);
 }
 
 // Returns the temperature from one DS18S20 in Degrees Celsius
