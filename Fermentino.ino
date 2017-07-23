@@ -1,8 +1,11 @@
 #include <OneWire.h>
 #include <RCSwitch.h>
+#include <SoftwareSerial.h>
+#include <serLCD.h>
 
 #define TEMPERATURE_PIN 10
 #define REMOTE_SWITCH_PIN 9
+#define LCD_PIN 2
 
 // See this link on how to set the following constants
 // https://github.com/sui77/rc-switch/wiki/HowTo_OperateLowCostOutlets
@@ -11,10 +14,12 @@
 
 OneWire ds(TEMPERATURE_PIN);
 RCSwitch rc = RCSwitch();
+serLCD lcd(LCD_PIN);
 
 float getTemperature(void);
 void startHeater(void);
 void stopHeater(void);
+void printTemperature(void);
 
 void setup(void) {
   pinMode(LED_BUILTIN, OUTPUT);
@@ -29,6 +34,8 @@ void loop(void) {
   while (true) {
     float temperature = getTemperature();
     Serial.println(temperature, 2);
+
+    printTemperature(temperature);
 
     flip = 1 - flip;
     if (flip) {
@@ -51,6 +58,14 @@ void stopHeater(void) {
   digitalWrite(LED_BUILTIN, LOW);
 
   rc.switchOff(REMOTE_SWITCH_GROUP, REMOTE_SWITCH_OUTLET);
+}
+
+void printTemperature(float temperature) {
+  lcd.clear();
+  lcd.print(temperature, 2);
+
+  // Degree symbol
+  lcd.print((char) 223);
 }
 
 // Returns the temperature from one DS18S20 in Degrees Celsius
@@ -105,3 +120,4 @@ float getTemperature(void) {
 
   return temperature;
 }
+
