@@ -4,7 +4,8 @@
 #define TEMPERATURE_PIN 10
 #define REMOTE_SWITCH_PIN 9
 
-# See https://github.com/sui77/rc-switch/wiki/HowTo_OperateLowCostOutlets
+// See this link on how to set the following constants
+// https://github.com/sui77/rc-switch/wiki/HowTo_OperateLowCostOutlets
 #define REMOTE_SWITCH_GROUP "00001"
 #define REMOTE_SWITCH_OUTLET "01000"
 
@@ -16,6 +17,7 @@ void startHeater(void);
 void stopHeater(void);
 
 void setup(void) {
+  pinMode(LED_BUILTIN, OUTPUT);
   Serial.begin(9600);
   rc.enableTransmit(REMOTE_SWITCH_PIN);
 }
@@ -39,11 +41,15 @@ void loop(void) {
 
 void startHeater(void) {
   Serial.println("STARTING HEATER");
+  digitalWrite(LED_BUILTIN, HIGH);
+
   rc.switchOn(REMOTE_SWITCH_GROUP, REMOTE_SWITCH_OUTLET);
 }
 
 void stopHeater(void) {
   Serial.println("STOPPING HEATER");
+  digitalWrite(LED_BUILTIN, LOW);
+
   rc.switchOff(REMOTE_SWITCH_GROUP, REMOTE_SWITCH_OUTLET);
 }
 
