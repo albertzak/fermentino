@@ -24,7 +24,6 @@ float getTemperature(void);
 float getSetpoint(void);
 void startHeater(void);
 void stopHeater(void);
-void printTemperature(void);
 void printStatus(float temperature, float setpoint, char isHeating);
 void printStatusLCD(float temperature, float setpoint, char isHeating);
 void printStatusSerial(float temperature, float setpoint, char isHeating);
@@ -80,8 +79,10 @@ void printStatusSerial(float temperature, float setpoint, char isHeating) {
 void printStatusLCD(float temperature, float setpoint, char isHeating) {
   lcd.clear();
 
-  //        [                ]
-  lcd.print("ist         soll");
+  // This is a visualization of the 16x2 LCD
+  //        [current      min]
+  //        [22.55  ->  35.97]
+  lcd.print("current      min");
   lcd.print(temperature, 2);
   lcd.print("  ");
 
@@ -141,7 +142,7 @@ float getTemperature(void) {
   ds.reset();
   ds.select(addr);
 
-  // start conversion, with parasite power on at the end
+  // Start conversion, with parasite power on at the end
   ds.write(0x44,1); 
 
   // Wait for temperature conversion to complete
