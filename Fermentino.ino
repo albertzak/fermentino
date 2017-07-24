@@ -8,8 +8,8 @@
 
 // See this link on how to set the following constants
 // https://github.com/sui77/rc-switch/wiki/HowTo_OperateLowCostOutlets
-#define REMOTE_SWITCH_GROUP "10000"
-#define REMOTE_SWITCH_OUTLET "10000"
+#define REMOTE_SWITCH_GROUP (char *) "10000"
+#define REMOTE_SWITCH_OUTLET (char *) "10000"
 
 #define TEMPERATURE_PIN 10
 #define REMOTE_SWITCH_PIN 9
@@ -24,6 +24,7 @@ float getTemperature(void);
 float getSetpoint(void);
 void startHeater(void);
 void stopHeater(void);
+void printTemperature(void);
 void printStatus(float temperature, float setpoint, char isHeating);
 void printStatusLCD(float temperature, float setpoint, char isHeating);
 void printStatusSerial(float temperature, float setpoint, char isHeating);
@@ -79,10 +80,8 @@ void printStatusSerial(float temperature, float setpoint, char isHeating) {
 void printStatusLCD(float temperature, float setpoint, char isHeating) {
   lcd.clear();
 
-  // This is a visualization of the 16x2 LCD
-  //        [current      min]
-  //        [22.55  ->  35.97]
-  lcd.print("current      min");
+  //        [                ]
+  lcd.print("ist         soll");
   lcd.print(temperature, 2);
   lcd.print("  ");
 
@@ -142,7 +141,7 @@ float getTemperature(void) {
   ds.reset();
   ds.select(addr);
 
-  // Start conversion, with parasite power on at the end
+  // start conversion, with parasite power on at the end
   ds.write(0x44,1); 
 
   // Wait for temperature conversion to complete
